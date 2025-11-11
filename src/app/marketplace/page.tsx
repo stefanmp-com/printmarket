@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useQuote } from '../../contexts/QuoteContext'
 
 const printProducts = [
   { 
@@ -60,6 +63,16 @@ const Arrow = () => (
 )
 
 export default function Marketplace() {
+  const { addToQuote, isInQuote, quoteItems } = useQuote()
+
+  const handleAddToQuote = (product: typeof printProducts[0]) => {
+    addToQuote({
+      name: product.name,
+      slug: product.slug,
+      imageUrl: product.imageUrl
+    })
+  }
+
   return (
     <div className="min-h-screen bg-[#FF00CC]">
       {/* Fixed Navigation and Search Container */}
@@ -117,17 +130,53 @@ export default function Marketplace() {
                     {product.name}
                   </h3>
                 </div>
-                <Link 
-                  href={`/quote/${product.slug}`}
-                  className="bg-[#686666] text-white px-4 sm:px-6 py-2 rounded-full hover:bg-[#2C2C2C] transition-colors text-sm sm:text-base whitespace-nowrap"
-                >
-                  Request Quotes
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <button
+                    onClick={() => handleAddToQuote(product)}
+                    className={`px-3 sm:px-4 py-2 rounded-full transition-colors text-xs sm:text-sm whitespace-nowrap ${
+                      isInQuote(product.slug)
+                        ? 'bg-[#22fc59] text-black border-2 border-black'
+                        : 'bg-white text-black border-2 border-black hover:bg-[#f0f0f0]'
+                    }`}
+                  >
+                    {isInQuote(product.slug) ? '✓ In Quote' : '+ Add to Quote'}
+                  </button>
+                  <Link 
+                    href={`/quote/${product.slug}`}
+                    className="bg-[#686666] text-white px-3 sm:px-4 py-2 rounded-full hover:bg-[#2C2C2C] transition-colors text-xs sm:text-sm whitespace-nowrap text-center"
+                  >
+                    Request Quotes
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Floating Quote Panel */}
+      {quoteItems.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-white border-2 border-black rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#FF00CC] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                {quoteItems.length}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-black">
+                  {quoteItems.length} item{quoteItems.length !== 1 ? 's' : ''} in quote
+                </p>
+                <Link 
+                  href="/quote/bulk"
+                  className="text-xs text-[#FF00CC] hover:underline"
+                >
+                  Review Quote →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { useQuote } from '../../../contexts/QuoteContext'
 
 const getProductName = (slug: string) => {
   return slug.split('-').map(word => 
@@ -15,6 +16,9 @@ export default function QuoteRequest() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : Array.isArray(params.slug) ? params.slug[0] : '';
   const productName = getProductName(slug);
+  
+  // Quote context for bulk quote functionality
+  const { addToQuote, isInQuote, quoteItems } = useQuote();
 
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -66,6 +70,31 @@ export default function QuoteRequest() {
     // Here you would typically send the data to your backend
     console.log('Submitting quote request:', formData)
     // Show success message or redirect
+  }
+
+  // Handle adding to bulk quote
+  const handleAddToBulkQuote = () => {
+    const productData = {
+      name: productName,
+      slug: slug,
+      imageUrl: `/images/${slug}.jpg`,
+      quantity: formData.quantity,
+      size: formData.size,
+      customWidth: formData.customWidth,
+      customHeight: formData.customHeight,
+      paperType: formData.paperType,
+      colorOption: formData.colorOption,
+      notes: formData.notes,
+      deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : undefined,
+      customFields: {
+        ...(formData.spotColors && { spotColors: formData.spotColors })
+      }
+    }
+    
+    addToQuote(productData)
+    
+    // Show success message
+    alert('Added to bulk quote! You can continue adding more products or review your quote.')
   }
 
   // Add error states
@@ -480,24 +509,75 @@ export default function QuoteRequest() {
                 </div>
               )}
 
-              <div className="flex gap-3 md:gap-4 mt-6">
-                <button
-                  onClick={() => setStep(3)}
-                  className="flex-1 py-3 md:py-4 text-sm md:text-base border border-black rounded-full text-black hover:bg-black hover:text-white transition-colors overflow-hidden whitespace-nowrap"
-                >
-                  ← Back
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 bg-black text-white py-3 md:py-4 text-sm md:text-base rounded-full hover:bg-[#00FF4C] hover:text-black transition-colors overflow-hidden whitespace-nowrap"
-                >
-                  Request Quote
-                </button>
+              <div className="space-y-4 mt-6">
+                {/* Action Buttons */}
+                <div className="flex gap-3 md:gap-4">
+                  <button
+                    onClick={() => setStep(3)}
+                    className="flex-1 py-3 md:py-4 text-sm md:text-base border border-black rounded-full text-black hover:bg-black hover:text-white transition-colors overflow-hidden whitespace-nowrap"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-black text-white py-3 md:py-4 text-sm md:text-base rounded-full hover:bg-[#00FF4C] hover:text-black transition-colors overflow-hidden whitespace-nowrap"
+                  >
+                    Request Quote
+                  </button>
+                </div>
+                
+                {/* Bulk Quote Option */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-3">Need multiple products? Add this to your bulk quote:</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleAddToBulkQuote}
+                        className="flex-1 bg-[#FF00CC] text-black py-3 md:py-4 text-sm md:text-base rounded-full hover:bg-[#ff56dd] transition-colors font-medium"
+                      >
+                        + Add to Bulk Quote
+                      </button>
+                      <Link
+                        href="/quote/bulk"
+                        className="flex-1 border border-[#FF00CC] text-[#FF00CC] py-3 md:py-4 text-sm md:text-base rounded-full hover:bg-[#FF00CC] hover:text-black transition-colors text-center font-medium"
+                      >
+                        Review Bulk Quote
+                      </Link>
+                    </div>
+                    {isInQuote(slug) && (
+                      <p className="text-xs text-green-600 mt-2">✓ This product is already in your bulk quote</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+      
+      {/* Floating Quote Panel */}
+      {quoteItems.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-white border-2 border-black rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#FF00CC] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                {quoteItems.length}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-black">
+                  {quoteItems.length} item{quoteItems.length !== 1 ? 's' : ''} in quote
+                </p>
+                <Link
+                  href="/quote/bulk"
+                  className="text-xs text-[#FF00CC] hover:underline"
+                >
+                  Review Quote →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
