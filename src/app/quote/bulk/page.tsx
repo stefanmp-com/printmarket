@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useQuote } from '../../../contexts/QuoteContext'
+import { useQuote, QuoteItem } from '../../../contexts/QuoteContext'
 import { getProductConfig } from '../../../config/productConfigs'
 
 export default function BulkQuotePage() {
@@ -27,7 +27,7 @@ export default function BulkQuotePage() {
     })
   }
 
-  const isItemReady = (item: any) => {
+  const isItemReady = (item: QuoteItem) => {
     const config = getProductConfig(item.slug)
     const hasRequiredFields = item.quantity && item.size && item.paperType && item.colorOption
     
@@ -44,7 +44,7 @@ export default function BulkQuotePage() {
     return hasRequiredFields
   }
 
-  const getReadyStatus = (item: any) => {
+  const getReadyStatus = (item: QuoteItem) => {
     if (isItemReady(item)) {
       return {
         status: 'ready',
